@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace HardCode.DataAccess.UnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    public class Repositories : IRepositories
     {
         private readonly ApplicationContext _context;
-        public UnitOfWork(ApplicationContext context)
+        public Repositories(ApplicationContext context)
         {
             _context = context;
             InstructorsRepository = new InstructorRepository(_context);

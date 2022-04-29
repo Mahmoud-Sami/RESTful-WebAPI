@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HardCode.Domain.Interfaces
 {
-    public interface IUnitOfWork : IDisposable
+    public interface IRepositories : IDisposable
     {
         IInstructorRepository InstructorsRepository { get; init; }
         IDepartmentRepository DepartmentsRepository { get; init; }

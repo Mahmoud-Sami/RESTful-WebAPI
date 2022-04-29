@@ -11,8 +11,8 @@ namespace HardCode.WebAPI.Controllers
     [ApiController]
     public class DepartmentController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
-        public DepartmentController(IUnitOfWork unitOfWork)
+        private readonly IRepositories _unitOfWork;
+        public DepartmentController(IRepositories unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }

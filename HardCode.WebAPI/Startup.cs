@@ -14,6 +14,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using HardCode.BusinessLogic.Helper;
+using HardCode.Domain.Interfaces.IServices;
+using HardCode.BusinessLogic.Services;
+using HardCode.Domain.Interfaces.IUnitsOfWork;
+using HardCode.DataAccess.UnitsOfWork;
 
 namespace WebAppAPI
 {
@@ -33,12 +38,20 @@ namespace WebAppAPI
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            services.AddTransient<IUnitOfWork, UnitOfWork>();
+            // Add Repositories.
+            services.AddTransient<IRepositories, Repositories>();
+
+            // Add Services.
+            services.AddTransient<IServices, Services>();
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAppAPI", Version = "v1" });
             });
+            
+            // Add Auto Mapper.
+            services.AddAutoMapper(typeof(MappingProfile));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
