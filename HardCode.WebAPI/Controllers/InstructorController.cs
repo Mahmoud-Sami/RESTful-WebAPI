@@ -1,5 +1,7 @@
-﻿using HardCode.Domain.Entities;
+﻿using HardCode.Domain.Dtos.Instructor;
+using HardCode.Domain.Entities;
 using HardCode.Domain.Interfaces;
+using HardCode.Domain.Interfaces.IUnitsOfWork;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -11,28 +13,28 @@ namespace HardCode.WebAPI.Controllers
     [ApiController]
     public class InstructorController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
-        public InstructorController(IUnitOfWork unitOfWork)
+        private readonly IServices _services;
+
+        public InstructorController(IServices services)
         {
-            _unitOfWork = unitOfWork;
+            _services = services;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Instructor>> GetAllInstructors()
+        public async Task<IEnumerable<InstructorDto>> GetAllInstructors()
         {
-            return await _unitOfWork.InstructorsRepository.GetAllAsync();
+            return await _services.Instructor.GetAllAsync();
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Instructor>> GetInstructorById(int id)
+        public async Task<ActionResult<InstructorDto>> GetInstructorById(int id)
         {
             try
             {
-                Instructor instructor = await _unitOfWork.InstructorsRepository.GetInstructorByIdAsync(id);
-                if (instructor == null)
+                if (!await _services.Instructor.AnyAsync(ins => ins.Id == id))
                     return NotFound();
-                else
-                    return Ok(instructor);
+
+                return Ok(await _services.Instructor.GetByIdAsync(id));
             }
             catch (System.Exception)
             {
@@ -42,68 +44,50 @@ namespace HardCode.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddInstructor(Instructor instructor)
+        public async Task<ActionResult> AddInstructor(CreateInstructorDto instructor)
         {
-            try
-            {
-                if (instructor == null) 
-                    return BadRequest();
+            if (instructor == null) 
+                return BadRequest();
 
-                instructor.Department = null;
-                await _unitOfWork.InstructorsRepository.AddAsync(instructor);
-                await _unitOfWork.SaveAsync();
-
-                return CreatedAtAction(nameof(GetInstructorById), new { id = instructor.Id }, instructor);
-            }
-            catch (System.Exception)
-            {
+            bool Result = await _services.Instructor.CreateAsync(instructor);
+                
+            if(!Result)
                 return StatusCode(StatusCodes.Status500InternalServerError);
-            }
 
+            int? Id = await _services.Instructor.GetIdByEmailAsync(instructor.Email);
+
+            return RedirectToAction(nameof(GetInstructorById), new { id = Id });
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Instructor>> UpdateInstructor(int id, Instructor newInstructor)
+        public async Task<ActionResult<InstructorDto>> UpdateInstructor(int id, CreateInstructorDto newInstructor)
         {
-            try
-            {
-                if (newInstructor == null || id != newInstructor.Id)
-                    return BadRequest();
+            if (!_services.Instructor.AnyAsync(ins => ins.Id == id).Result)
+                return BadRequest($"Instructor with Id = {id} not found");
 
-                Instructor updatedInstructor = 
-                    await _unitOfWork.InstructorsRepository.UpdateInstructorAsync(newInstructor);
-                await _unitOfWork.SaveAsync();
+            if (newInstructor == null)
+                return BadRequest();
 
-                if (updatedInstructor == null)
-                    return BadRequest($"Instructor with Id = {id} not found");
-                else
-                    return updatedInstructor;
-                
-            }
-            catch (System.Exception)
-            {
+            bool Result = await _services.Instructor.UpDateAsync(newInstructor, id);
+
+            if (!Result)
                 return StatusCode(StatusCodes.Status500InternalServerError);
-            }
+
+            return Ok(newInstructor);   
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> DeleteInstructor(int id)
-        {
-            try
-            {
-                var deletedInstructor = await _unitOfWork.InstructorsRepository.GetByIDAsync(id);
-                if (deletedInstructor == null)
-                    return NotFound($"Instructor with Id = {id} not found");
+        { 
+            if (!await _services.Instructor.AnyAsync(ins => ins.Id == id))
+                return NotFound($"Instructor with Id = {id} not found");
 
-                _unitOfWork.InstructorsRepository.Remove(deletedInstructor);
-                await _unitOfWork.SaveAsync();
-                return Ok($"Instructor with Id = {id} deleted successfully");
+            bool Result = await _services.Instructor.DeleteAsync(id);
 
-            }
-            catch (System.Exception)
-            {
+            if(!Result)
                 return StatusCode(StatusCodes.Status500InternalServerError);
-            }
+
+            return Ok($"Instructor with Id = {id} deleted successfully");
         }
 
     }

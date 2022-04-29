@@ -2,7 +2,9 @@
 using HardCode.Domain.Interfaces;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
+using System.Linq;
+using System.Linq.Expressions;
+using System;
 
 namespace HardCode.DataAccess.Repositories
 {
@@ -10,6 +12,22 @@ namespace HardCode.DataAccess.Repositories
     {
         public InstructorRepository(ApplicationContext context) : base(context)
         {
+        }
+
+        public async Task<Instructor> GetByIDAsync(int id, Expression<Func<Instructor, object>> Include)
+            => await _context.Set<Instructor>().Where(ins => ins.Id == id)
+                .Include(Include).SingleOrDefaultAsync();
+
+        
+
+        public async Task<int?> GetIdByEmailAsync(string email)
+        {
+            if (!AnyAsync(ins => ins.Email == email).Result)
+                return null;
+
+            return await _context.Set<Instructor>()
+                .Where(ins => ins.Email == email)
+                .Select(ins => ins.Id).SingleOrDefaultAsync();
         }
 
         public async Task<Instructor> GetInstructorByIdAsync(int id)

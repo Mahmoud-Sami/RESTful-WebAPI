@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using HardCode.Domain.Entities;
+using System.Linq.Expressions;
+using System;
+using System.Linq;
 
 namespace HardCode.DataAccess.Repositories
 {
@@ -26,9 +29,17 @@ namespace HardCode.DataAccess.Repositories
             await _context.Set<T>().AddRangeAsync(entities);
         }
 
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> expression)
+            => await _context.Set<T>().AnyAsync(expression);
+
         public async Task<IEnumerable<T>> GetAllAsync()
         {
             return await _context.Set<T>().ToListAsync();
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, object>> Include)
+        {
+            return await _context.Set<T>().Include(Include).ToListAsync();
         }
 
         public async Task<T> GetByIDAsync(int id)
